@@ -109,11 +109,12 @@ def record_tracker_run(
         raise
 
 
-def fetch_latest_snapshot_id_for_batch(supabase: Client, batch_id: str) -> Optional[str]:
+def fetch_latest_snapshot_id_for_batch(supabase: Client, batch_id: str, product_id: str) -> Optional[str]:
     resp = (
         supabase.table("analysis_snapshots")
         .select("id")
         .eq("batch_id", batch_id)
+        .eq("product_id", product_id)
         .order("started_at", desc=True)
         .limit(1)
         .execute()
@@ -189,8 +190,7 @@ def fetch_engine_queries_for_snapshot(
         chatgpt = [r["optimization_prompt"] for r in chatgpt_rows if r.get("optimization_prompt")]
 
     if mode == "all":
-        all_texts = list(dict.fromkeys(google + perplexity + chatgpt))
-        return all_texts, all_texts, all_texts
+        return google, perplexity, chatgpt
 
     return google, perplexity, chatgpt
 
@@ -287,7 +287,7 @@ def run_once(
                 )
                 continue
 
-            snapshot_id = fetch_latest_snapshot_id_for_batch(supabase, batch_id)
+            snapshot_id = fetch_latest_snapshot_id_for_batch(supabase, batch_id, product_id)
             if not snapshot_id:
                 record_tracker_run(
                     supabase,

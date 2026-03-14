@@ -50,13 +50,13 @@ def build_payload_for_product(
 
     batch_id = main.fetch_latest_daily_batch_id(supabase, product_id)
     if not batch_id:
-        print(f"No daily-tracked batch found for product {product_id}. Ensure query_batches.daily_tracker=true for at least one batch.", file=sys.stderr)
-        sys.exit(1)
+        print("No daily batch found for product. Ensure query_batches.daily_tracker=true.", file=sys.stderr)
+        raise SystemExit(0)
 
-    snapshot_id = main.fetch_latest_snapshot_id_for_batch(supabase, batch_id)
+    snapshot_id = main.fetch_latest_snapshot_id_for_batch(supabase, batch_id, product_id)
     if not snapshot_id:
-        print(f"No snapshot found for batch {batch_id} - cannot reanalyze. Ensure analysis_snapshots has a row for this batch.", file=sys.stderr)
-        sys.exit(1)
+        print("No snapshot found for daily batch. Cannot build payload.", file=sys.stderr)
+        raise SystemExit(0)
 
     google_q, perplexity_q, chatgpt_q = main.fetch_engine_queries_for_snapshot(supabase, snapshot_id, engine_mode)
 
